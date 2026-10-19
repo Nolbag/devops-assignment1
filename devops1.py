@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import subprocess
 from datetime import datetime
 import json
 import boto3
@@ -13,6 +14,7 @@ website_configuration = {
     }
 image_url = 'http://devops.setudemo.net/logo.jpg'
 object_name = 'logo.jpg'
+pemkey_name = 'DevOps1.pem'
 
 def create_ec2_instance():
     new_instances = ec2.create_instances(
@@ -21,7 +23,7 @@ def create_ec2_instance():
         MaxCount=1,
         InstanceType='t2.nano',
         SecurityGroups=['launch-wizard-1'],
-        KeyName='DevOps2026',
+        KeyName='DevOps1',
         TagSpecifications=[
             {
                 'ResourceType': 'instance',
@@ -51,8 +53,8 @@ def create_ec2_instance():
     instance = new_instances[0]
     instance.wait_until_running()
     instance.reload()
-    print('Instance Running.')
-    print(instance.id)
+    print(f'Instance {instance.id} is running.')
+    return instance
 
 def create_s3_bucket():
     s3.create_bucket(Bucket=bucket_name)
@@ -88,13 +90,31 @@ def download_file():
 def upload_file_to_s3():
     print(f'Uploading file to S3 bucket {bucket_name}.')
     try:
-        s3.Object(bucket_name, object_name).put(Body=open(object_name, 'rb'))
+        s3.Object(bucket_name, object_name).put(Body=open(object_name, 'rb'), ContentType="image/jpeg")
         print (f'File uploaded to S3 {bucket_name}.')
     except Exception as error:
         print (error)
 
+def upload_monitoring(instance):
+    ipv4 = instance.public_ip_address
+    instance_id = instance.id
+    cmd1 = f"scp -o StrictHostKeyChecking=no -i {pemkey_name} monitoring.sh ec2-user@{ipv4}:."
+    cmd2 = f"ssh -i {pemkey_name} ec2-user@{ipv4} 'chmod 700 monitoring.sh && ./monitoring.sh'"
+    
+    try:
+        result = subprocess.run(cmd1, shell=True)
+        if (result.returncode !=0):
+            print(f'Error copying monitoring script on {instance_id}.')
+        else:
+            subprocess.run(cmd2, shell=True)
+            print(f'Monitoring script copied to {instance_id} and executed.')
+    except Exception as error:
+        print (error)
+
+
 if __name__ == '__main__':
-    create_ec2_instance()
+    instance = create_ec2_instance()
     create_s3_bucket()
     download_file()
     upload_file_to_s3()
+    upload_monitoring(instance)
