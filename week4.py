@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime
+import json
 import boto3
 from requests import *
 
@@ -11,6 +12,7 @@ website_configuration = {
     'IndexDocument': {'Suffix': 'index.html'},
     }
 image_url = 'http://devops.setudemo.net/logo.jpg'
+object_name = 'logo.jpg'
 
 def create_ec2_instance():
     new_instances = ec2.create_instances(
@@ -53,22 +55,46 @@ def create_ec2_instance():
     print(instance.id)
 
 def create_s3_bucket():
-    response = s3.create_bucket(Bucket=bucket_name)
-    print(response)
-    print("Bucket created")
+    s3.create_bucket(Bucket=bucket_name)
+    print(f"Bucket created: {bucket_name}")
+
+    s3.meta.client.delete_public_access_block(Bucket=bucket_name)
+
+    bucket_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "PublicReadGetObject",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": ["s3:GetObject"],
+                "Resource": f"arn:aws:s3:::{bucket_name}/*"
+            }
+        ]
+    }
+    s3.Bucket(bucket_name).Policy().put(Policy=json.dumps(bucket_policy))
 
     bucket_website = s3.BucketWebsite(bucket_name)
     response = bucket_website.put(WebsiteConfiguration=website_configuration)
     print('Website configured.')
 
 def download_file():
-    print('Downloading file')
+    print('Downloading file.')
     response = get(image_url)
     with open('logo.jpg', 'wb') as f:
         f.write(response.content)
-    print('File downloaded.')
+    print(f'File downloaded from {image_url}.')
+
+def upload_file_to_s3():
+    print(f'Uploading file to S3 bucket {bucket_name}.')
+    try:
+        s3.Object(bucket_name, object_name).put(Body=open(object_name, 'rb'))
+        print (f'File uploaded to S3 {bucket_name}.')
+    except Exception as error:
+        print (error)
 
 if __name__ == '__main__':
     create_ec2_instance()
     create_s3_bucket()
     download_file()
+    upload_file_to_s3()
