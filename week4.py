@@ -61,7 +61,6 @@ def create_s3_bucket():
     response = bucket_website.put(WebsiteConfiguration=website_configuration)
     print('Website configured.')
 
-
 def download_file():
     print('Downloading file')
     response = get(image_url)
