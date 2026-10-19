@@ -33,12 +33,12 @@ def create_ec2_instance():
     ipv4=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
     ami_id=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/ami-id)
     availability_zone=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
-    echo '<html>' > index.html
-    echo 'Instance ID: ' $instance_id >> index.html
-    echo 'Private IP Address: ' $ipv4 >> index.html
-    echo 'AMI ID: ' $ami_id >> index.html
-    echo 'Availability Zone: ' $availability_zone >> index.html
-    echo '</html>' >> index.html
+    echo "<html>" > index.html
+    echo "Instance ID: $instance_id <br>" >> index.html
+    echo "Private IP Address: $ipv4 <br>" >> index.html
+    echo "AMI ID: $ami_id <br>" >> index.html
+    echo "Availability Zone: $availability_zone <br>" >> index.html
+    echo "</html>" >> index.html
     cp index.html /var/www/html/index.html
     ''',
     )
