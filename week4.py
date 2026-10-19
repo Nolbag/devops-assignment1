@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from datetime import datetime
 import boto3
+from requests import *
 
 ec2 = boto3.resource('ec2')
 s3 = boto3.resource("s3")
@@ -9,6 +10,7 @@ website_configuration = {
     'ErrorDocument': {'Key': 'error.html'},
     'IndexDocument': {'Suffix': 'index.html'},
     }
+image_url = 'http://devops.setudemo.net/logo.jpg'
 
 def create_ec2_instance():
     new_instances = ec2.create_instances(
@@ -59,6 +61,15 @@ def create_s3_bucket():
     response = bucket_website.put(WebsiteConfiguration=website_configuration)
     print('Website configured.')
 
+
+def download_file():
+    print('Downloading file')
+    response = get(image_url)
+    with open('logo.jpg', 'wb') as f:
+        f.write(response.content)
+    print('File downloaded.')
+
 if __name__ == '__main__':
     create_ec2_instance()
     create_s3_bucket()
+    download_file()
