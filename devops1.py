@@ -17,7 +17,7 @@ object_name = 'logo.jpg'
 pemkey_name = 'DevOps1.pem'
 
 def create_ec2_instance():
-    try
+    try:
         new_instances = ec2.create_instances(
             ImageId='ami-0fef201115eefe936',
             MinCount=1,
