@@ -1,4 +1,16 @@
 #!/usr/bin/bash
+
+# until loop to check if the web server is running, if not wait for 5 seconds and check again. Loop exits when the web server is running.
+# Prevents the program from continuing until the web server is running.
+#https://www.w3schools.com/bash/bash_loops.php. https://www.geeksforgeeks.org/linux-unix/systemctl-in-unix/
+until systemctl is-active --quiet httpd
+do
+    echo "Web server is not running, waiting..."
+    sleep 5
+done
+
+echo "Web server is runnning"
+
 #
 # Some basic monitoring functionality; Tested on Amazon Linux 2023.
 #
@@ -11,9 +23,6 @@ HTTPD_PROCESSES=$(ps -A | grep -c httpd)
 echo "Instance ID: $INSTANCE_ID"
 echo "Memory utilisation: $MEMORYUSAGE"
 echo "No of processes: $PROCESSES"
-if [ $HTTPD_PROCESSES -ge 1 ]
-then
-    echo "Web server is running"
-else
-    echo "Web server is NOT running"
-fi
+#Added output for the number of httpd processes running.
+echo "No of httpd processes: $HTTPD_PROCESSES"
+echo "Monitoring complete."

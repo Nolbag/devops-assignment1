@@ -5,6 +5,7 @@ import json
 import boto3
 from requests import *
 
+# Defining variables and objects
 ec2 = boto3.resource('ec2')
 s3 = boto3.resource("s3")
 bucket_name = datetime.now().strftime("%H%M%S-pnolan")
@@ -15,6 +16,7 @@ website_configuration = {
 image_url = 'http://devops.setudemo.net/logo.jpg'
 img_download = 'logo.jpg'
 pemkey_name = 'DevOps1.pem'
+URL_file = 'pnolan-websites.txt'
 
 def create_ec2_instance():
     try:
@@ -86,6 +88,7 @@ def create_s3_bucket():
     except Exception as error:
         print(error)
 
+# Download a file from a URL and save it in the root folder.
 # https://www.geeksforgeeks.org/python/how-to-download-files-from-urls-with-python/
 def download_file():
     print('Downloading file.')
@@ -100,6 +103,7 @@ def download_file():
     except Exception as error:
         print(error)
 
+# Upload an image file and an index file to an S3 bucket.
 # https://docs.aws.amazon.com/boto3/latest/guide/s3-uploading-files.html
 def upload_files_to_s3():
     print(f'Uploading files to S3 bucket {bucket_name}.')
@@ -113,15 +117,20 @@ def upload_files_to_s3():
     except Exception as error:
         print (error)
 
+# Write the URLs of the EC2 instance and the S3 static website to a text file.
+# Takes in the instance object returned by the create_ec2_instance() function as an argument.
+# https://www.w3schools.com/python/python_file_write.asp
 def urls_to_file(instance):
     try:
-        with open("pnolan-websites.txt", "w") as f:
+        with open("URL_file", "w") as f:
             f.write(f"ec2 Instance: http://{instance.public_ip_address}/\n")
             f.write(f"S3 Static Website: http://{bucket_name}.s3-website-us-east-1.amazonaws.com/\n")
-        print('URLs written to pnolan-websites.txt.')
+        print(f'URLs written to {URL_file}')
     except Exception as error:
         print (error)
 
+# Upload the monitoring script to the EC2 instance and execute it. 
+# Takes in the instance object returned by the create_ec2_instance() function as an argument.
 def upload_monitoring(instance):
     ipv4 = instance.public_ip_address
     instance_id = instance.id
@@ -134,7 +143,20 @@ def upload_monitoring(instance):
             print(f'Error copying monitoring script on {instance_id}.')
         else:
             subprocess.run(cmd2, shell=True)
-            print(f'Monitoring script copied to {instance_id} and executed.')
+    except Exception as error:
+        print (error)
+
+# Create an AMI from the EC2 instance created by the python script.
+# Takes in the instance object returned by the create_ec2_instance() function as an argument.
+# https://docs.aws.amazon.com/boto3/latest/reference/services/ec2/client/create_image.html#
+def create_AMI(instance):
+    try:
+        image = instance.create_image(
+            InstanceId=instance.id,
+            Name=datetime.now().strftime("AMI PN-%Y%m-%d-%f"),
+            Description='AMI Created for DevOps Assignment 1',
+        )
+        print(f'AMI created: {image.id}')
     except Exception as error:
         print (error)
 
@@ -146,3 +168,4 @@ if __name__ == '__main__':
     urls_to_file(instance)
     upload_files_to_s3()
     upload_monitoring(instance)
+    create_AMI(instance)
