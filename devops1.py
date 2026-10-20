@@ -17,11 +17,12 @@ image_url = 'http://devops.setudemo.net/logo.jpg'
 img_download = 'logo.jpg'
 pemkey_name = 'DevOps1.pem'
 URL_file = 'pnolan-websites.txt'
+html_file= 'index.html'
 
 def create_ec2_instance():
     try:
         new_instances = ec2.create_instances(
-            ImageId='ami-0fef201115eefe936',
+            ImageId='ami-0567589d25e06853e',
             MinCount=1,
             MaxCount=1,
             InstanceType='t2.nano',
@@ -122,7 +123,7 @@ def upload_files_to_s3():
 # https://www.w3schools.com/python/python_file_write.asp
 def urls_to_file(instance):
     try:
-        with open("URL_file", "w") as f:
+        with open(URL_file, "w") as f:
             f.write(f"ec2 Instance: http://{instance.public_ip_address}/\n")
             f.write(f"S3 Static Website: http://{bucket_name}.s3-website-us-east-1.amazonaws.com/\n")
         print(f'URLs written to {URL_file}')
@@ -156,7 +157,7 @@ def create_AMI(instance):
             Name=datetime.now().strftime("AMI PN-%Y%m-%d-%f"),
             Description='AMI Created for DevOps Assignment 1',
         )
-        print(f'AMI created: {image.id}')
+        print(f'AMI created: {image.name} with ID: {image.id}')
     except Exception as error:
         print (error)
 
