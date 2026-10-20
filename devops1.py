@@ -40,12 +40,14 @@ def create_ec2_instance():
         systemctl start httpd
         TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
         instance_id=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/instance-id)
-        ipv4=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/local-ipv4)
+        ipv4=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
         ami_id=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/ami-id)
         availability_zone=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
         echo "<html>" > index.html
+        echo "<h1>EC2 Instance Information</h1>" >> index.html
+        echo "<p>Information about the instance displaying this page can be found below.</p>" >> index.html
         echo "Instance ID: $instance_id <br>" >> index.html
-        echo "Private IP Address: $ipv4 <br>" >> index.html
+        echo "Public IP Address: $ipv4 <br>" >> index.html
         echo "AMI ID: $ami_id <br>" >> index.html
         echo "Availability Zone: $availability_zone <br>" >> index.html
         echo "</html>" >> index.html
