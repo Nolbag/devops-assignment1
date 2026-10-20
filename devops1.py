@@ -113,6 +113,15 @@ def upload_files_to_s3():
     except Exception as error:
         print (error)
 
+def urls_to_file(instance):
+    try:
+        with open("pnolan-websites.txt", "w") as f:
+            f.write(f"ec2 Instance: http://{instance.public_ip_address}/\n")
+            f.write(f"S3 Static Website: http://{bucket_name}.s3-website-us-east-1.amazonaws.com/\n")
+        print('URLs written to pnolan-websites.txt.')
+    except Exception as error:
+        print (error)
+
 def upload_monitoring(instance):
     ipv4 = instance.public_ip_address
     instance_id = instance.id
@@ -134,5 +143,6 @@ if __name__ == '__main__':
     instance = create_ec2_instance()
     create_s3_bucket()
     download_file()
+    urls_to_file(instance)
     upload_files_to_s3()
     upload_monitoring(instance)
