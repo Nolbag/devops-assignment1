@@ -13,7 +13,7 @@ website_configuration = {
     'IndexDocument': {'Suffix': 'index.html'},
     }
 image_url = 'http://devops.setudemo.net/logo.jpg'
-object_name = 'logo.jpg'
+img_download = 'logo.jpg'
 pemkey_name = 'DevOps1.pem'
 
 def create_ec2_instance():
@@ -86,21 +86,30 @@ def create_s3_bucket():
     except Exception as error:
         print(error)
 
+# https://www.geeksforgeeks.org/python/how-to-download-files-from-urls-with-python/
 def download_file():
     print('Downloading file.')
     try:
         response = get(image_url)
-        with open('logo.jpg', 'wb') as f:
-            f.write(response.content)
-        print(f'File downloaded from {image_url}.')
+        if response.status_code == 200:
+            with open(img_download, 'wb') as f:
+                f.write(response.content)
+            print(f'File downloaded from {image_url}.')
+        else:
+            print(f'Failed to download file from {image_url}. Status code: {response.status_code}')
     except Exception as error:
         print(error)
 
-def upload_file_to_s3():
-    print(f'Uploading file to S3 bucket {bucket_name}.')
+# https://docs.aws.amazon.com/boto3/latest/guide/s3-uploading-files.html
+def upload_files_to_s3():
+    print(f'Uploading files to S3 bucket {bucket_name}.')
     try:
-        s3.Object(bucket_name, object_name).put(Body=open(object_name, 'rb'), ContentType="image/jpeg")
-        print (f'File uploaded to S3 {bucket_name}.')
+        with open(img_download, "rb") as f:
+            s3.Object(bucket_name, img_download).put(Body=f, ContentType="image/jpeg")
+            print (f'{img_download} uploaded to {bucket_name}.')
+        with open("index.html", "rb") as f:
+            s3.Object(bucket_name, "index.html").put(Body=f, ContentType="text/html")
+            print (f'index.html uploaded to {bucket_name}.')
     except Exception as error:
         print (error)
 
@@ -125,5 +134,5 @@ if __name__ == '__main__':
     instance = create_ec2_instance()
     create_s3_bucket()
     download_file()
-    upload_file_to_s3()
+    upload_files_to_s3()
     upload_monitoring(instance)
