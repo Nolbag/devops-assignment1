@@ -200,6 +200,7 @@ def cloudwatch_monitor(instance):
         networkin_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
                                                     MetricName='NetworkIn',
                                                     Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
+        
         metric = list(networkin_iterator)[0]
 
         response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
@@ -207,6 +208,17 @@ def cloudwatch_monitor(instance):
                                         Period=300,
                                         Statistics=['Average'])
         print ("Average Network In:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
+
+        networkout_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
+                                                    MetricName='NetworkOut',
+                                                    Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
+        metric = list(networkout_iterator)[0]
+
+        response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
+                                        EndTime=datetime.now(timezone.utc),
+                                        Period=300,
+                                        Statistics=['Average'])
+        print ("Average Network Out:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
 
         print('CloudWatch monitoring completed.')
     except Exception as error:
