@@ -185,17 +185,29 @@ def cloudwatch_monitor(instance):
         print('Waiting 6 minutes for CloudWatch metrics to be available...')
         time.sleep(360)
 
-        metric_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
+        utilisation_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
                                                     MetricName='CPUUtilization',
                                                     Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
 
-        metric = list(metric_iterator)[0]
+        metric = list(utilisation_iterator)[0]
 
         response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
                                         EndTime=datetime.now(timezone.utc),
                                         Period=300,
                                         Statistics=['Average'])
         print ("Average CPU utilisation:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
+
+        networkin_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
+                                                    MetricName='NetworkIn',
+                                                    Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
+        metric = list(networkin_iterator)[0]
+
+        response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
+                                        EndTime=datetime.now(timezone.utc),
+                                        Period=300,
+                                        Statistics=['Average'])
+        print ("Average Network In:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
+
         print('CloudWatch monitoring completed.')
     except Exception as error:
         print (error)
