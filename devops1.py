@@ -231,6 +231,7 @@ def cloudwatch_monitor(instance):
 if __name__ == '__main__':
     instance = create_ec2_instance()
     create_s3_bucket()
+    create_index_file()
     download_file()
     urls_to_file(instance)
     upload_files_to_s3()
