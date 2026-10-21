@@ -19,13 +19,16 @@ website_configuration = {
     }
 
 # Defining variables to be used in functions.
+initials = 'PN'
 image_url = 'http://devops.setudemo.net/logo.jpg'
 img_download = 'logo.jpg'
 pemkey_name = 'DevOps1.pem'
 URL_file = 'pnolan-websites.txt'
 html_file= 'index.html'
+ec2_metrics=['CPUUtilization', 'NetworkIn', 'NetworkOut']
 
 # Defining variables for EC2 instance creation.
+availability_zone = 'us-east-1b'
 image_id = 'ami-0567589d25e06853e'
 instance_type = 't2.nano'
 security_group = 'launch-wizard-1'
@@ -57,9 +60,11 @@ user_data='''#!/bin/bash
         cp index.html /var/www/html/index.html
         '''
 
+# https://docs.aws.amazon.com/boto3/latest/reference/services/ec2/service-resource/create_instances.html
 def create_ec2_instance():
     try:
         new_instances = ec2.create_instances(
+            Placement={'AvailabilityZone': availability_zone},
             ImageId=image_id,
             MinCount=1,
             MaxCount=1,
@@ -171,7 +176,7 @@ def create_AMI(instance):
     try:
         image = instance.create_image(
             InstanceId=instance.id,
-            Name=datetime.now().strftime("AMI PN-%Y%m-%d-%f"),
+            Name=datetime.now().strftime("AMI " + initials + "-%Y%m-%d-%f"),
             Description='AMI Created for DevOps Assignment 1',
         )
         print(f'AMI created: {image.name} with ID: {image.id}')
@@ -184,42 +189,20 @@ def cloudwatch_monitor(instance):
         print(f'CloudWatch monitoring enabled for instance {instance.id}.')
         print('Waiting 6 minutes for CloudWatch metrics to be available...')
         time.sleep(360)
-
-        utilisation_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
-                                                    MetricName='CPUUtilization',
-                                                    Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
-
-        metric = list(utilisation_iterator)[0]
-
-        response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
-                                        EndTime=datetime.now(timezone.utc),
-                                        Period=300,
-                                        Statistics=['Average'])
-        print ("Average CPU utilisation:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
-
-        networkin_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
-                                                    MetricName='NetworkIn',
-                                                    Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
         
-        metric = list(networkin_iterator)[0]
+        for metric_name in ec2_metrics:
+            utilisation_iterator = cloudwatch.metrics.filter(Namespace='AWS/EC2',
+                                                            MetricName=metric_name,
+                                                            Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
+            metric = list(utilisation_iterator)[0]
 
-        response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
-                                        EndTime=datetime.now(timezone.utc),
-                                        Period=300,
-                                        Statistics=['Average'])
-        print ("Average Network In:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
-
-        networkout_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
-                                                    MetricName='NetworkOut',
-                                                    Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
-        metric = list(networkout_iterator)[0]
-
-        response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
-                                        EndTime=datetime.now(timezone.utc),
-                                        Period=300,
-                                        Statistics=['Average'])
-        print ("Average Network Out:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
-
+            response = metric.get_statistics(StartTime=datetime.now(timezone.utc) - timedelta(minutes=5),
+                                             EndTime=datetime.now(timezone.utc),
+                                             Period=300,
+                                             Statistics=['Average'])
+            average_value = response['Datapoints'][0]['Average']
+            unit = response['Datapoints'][0]['Unit']
+            print(f"Average {metric_name}: {average_value} {unit}")
         print('CloudWatch monitoring completed.')
     except Exception as error:
         print (error)
