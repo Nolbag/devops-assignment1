@@ -8,6 +8,7 @@ from requests import *
 # Defining variables and objects
 ec2 = boto3.resource('ec2')
 s3 = boto3.resource("s3")
+
 bucket_name = datetime.now().strftime("%H%M%S-pnolan")
 website_configuration = {
     'ErrorDocument': {'Key': 'error.html'},
@@ -19,22 +20,19 @@ pemkey_name = 'DevOps1.pem'
 URL_file = 'pnolan-websites.txt'
 html_file= 'index.html'
 
-def create_ec2_instance():
-    try:
-        new_instances = ec2.create_instances(
-            ImageId='ami-0567589d25e06853e',
-            MinCount=1,
-            MaxCount=1,
-            InstanceType='t2.nano',
-            SecurityGroups=['launch-wizard-1'],
-            KeyName='DevOps1',
-            TagSpecifications=[
-                {
-                    'ResourceType': 'instance',
-                    'Tags': [{'Key': 'Name', 'Value': 'WebServer1'}],
-                }
-            ],
-            UserData='''#!/bin/bash
+# Defining variables for EC2 instance creation.
+image_id = 'ami-0567589d25e06853e'
+instance_type = 't2.nano'
+security_group = 'launch-wizard-1'
+key_name = 'DevOps1'
+tag_specifications = [
+            {       'ResourceType': 'instance',
+                    'Tags': [
+                        {'Key': 'Name', 'Value': 'WebServer1'}
+                        ]
+            }
+            ]
+user_data='''#!/bin/bash
         yum install httpd -y
         systemctl enable httpd
         systemctl start httpd
@@ -52,7 +50,19 @@ def create_ec2_instance():
         echo "Availability Zone: $availability_zone <br>" >> index.html
         echo "</html>" >> index.html
         cp index.html /var/www/html/index.html
-        ''',
+        '''
+
+def create_ec2_instance():
+    try:
+        new_instances = ec2.create_instances(
+            ImageId=image_id,
+            MinCount=1,
+            MaxCount=1,
+            InstanceType=instance_type,
+            SecurityGroups=[security_group],
+            KeyName=key_name,
+            TagSpecifications=tag_specifications,
+            UserData=user_data
         )
 
         print('Instance Initializing.')
