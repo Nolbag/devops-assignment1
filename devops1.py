@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 import subprocess
-from datetime import datetime
+from datetime import *
+import time
 import json
 import boto3
 from requests import *
 
-# Defining variables and objects
+# Defining boto 3 objects.
 ec2 = boto3.resource('ec2')
 s3 = boto3.resource("s3")
+cloudwatch = boto3.resource('cloudwatch')
 
+# Defining variables for S3 bucket creation.
 bucket_name = datetime.now().strftime("%H%M%S-pnolan")
 website_configuration = {
     'ErrorDocument': {'Key': 'error.html'},
     'IndexDocument': {'Suffix': 'index.html'},
     }
+
+# Defining variables to be used in functions.
 image_url = 'http://devops.setudemo.net/logo.jpg'
 img_download = 'logo.jpg'
 pemkey_name = 'DevOps1.pem'
@@ -173,6 +178,27 @@ def create_AMI(instance):
     except Exception as error:
         print (error)
 
+def cloudwatch_monitor(instance):
+    try: 
+        instance.monitor()
+        print(f'CloudWatch monitoring enabled for instance {instance.id}.')
+        print('Waiting 6 minutes for CloudWatch metrics to be available...')
+        time.sleep(360)
+
+        metric_iterator = cloudwatch.metrics.filter (Namespace='AWS/EC2',
+                                                    MetricName='CPUUtilization',
+                                                    Dimensions=[{'Name':'InstanceId', 'Value': instance.id}])
+
+        metric = list(metric_iterator)[0]
+
+        response = metric.get_statistics(StartTime = datetime.now(timezone.utc) - timedelta(minutes=5),
+                                        EndTime=datetime.now(timezone.utc),
+                                        Period=300,
+                                        Statistics=['Average'])
+        print ("Average CPU utilisation:", response['Datapoints'][0]['Average'], response['Datapoints'][0]['Unit'])
+        print('CloudWatch monitoring completed.')
+    except Exception as error:
+        print (error)
 
 if __name__ == '__main__':
     instance = create_ec2_instance()
@@ -182,3 +208,4 @@ if __name__ == '__main__':
     upload_files_to_s3()
     upload_monitoring(instance)
     create_AMI(instance)
+    cloudwatch_monitor(instance)
