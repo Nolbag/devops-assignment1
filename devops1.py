@@ -59,6 +59,17 @@ user_data='''#!/bin/bash
         echo "</html>" >> index.html
         cp index.html /var/www/html/index.html
         '''
+html_content= '''<!DOCTYPE html>
+                <HTML>  
+                    <head>
+                        <title>S3 Bucket website</title>
+                    </head>
+                    <body>
+                        <h1>DevOps Assignment 1 Paul Nolan</h1>
+                        <p><img src="logo.jpg" alt="Logo"></p>
+                    </body>
+                </HTML>
+                '''
 
 # https://docs.aws.amazon.com/boto3/latest/reference/services/ec2/service-resource/create_instances.html
 def create_ec2_instance():
@@ -110,6 +121,16 @@ def create_s3_bucket():
         print('Website configured.')
     except Exception as error:
         print(error)
+
+# Creates an index.html file in the root folder of the repo using the html code stored in the html_file variable.
+# https://www.w3schools.com/python/python_file_write.asp
+def create_index_file():
+    try:
+        with open(html_file, "w") as f:
+            f.write(html_content)
+        print(f'File created: {html_file}')
+    except Exception as error:
+        print (error)
 
 # Download a file from a URL and save it in the root folder.
 # https://www.geeksforgeeks.org/python/how-to-download-files-from-urls-with-python/
